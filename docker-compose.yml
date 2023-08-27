@@ -9,7 +9,6 @@ services:
       - "5444:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     env_file:
       - .env
 

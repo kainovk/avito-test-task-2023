@@ -3,6 +3,13 @@ package storage
 import "errors"
 
 var (
-	ErrURLNotFound = errors.New("url not found")
-	ErrURLExists   = errors.New("url exists")
+	ErrUserNotFound  = errors.New("user not found")
+	ErrUserExists    = errors.New("user exists")
+	ErrUserNotExists = errors.New("user not exists")
+
+	ErrSegmentNotFound  = errors.New("segment not found")
+	ErrSegmentExists    = errors.New("segment exists")
+	ErrSegmentNotExists = errors.New("segment not exists")
+
+	ErrUserAlreadyHaveSegment = errors.New("user already have segment")
 )

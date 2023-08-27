@@ -1,18 +1,19 @@
-CREATE TABLE users
-(
-    id      BIGSERIAL PRIMARY KEY,
-    user_id INT NOT NULL
-);
-
-CREATE TABLE segments
+CREATE TABLE IF NOT EXISTS users
 (
     id   BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL
+    name VARCHAR(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE user_segments
+CREATE TABLE IF NOT EXISTS segments
+(
+    id   BIGSERIAL PRIMARY KEY,
+    name VARCHAR(512) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_segments
 (
     id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT REFERENCES users (user_id) ON DELETE CASCADE,
-    segment_id BIGINT REFERENCES segments (id) ON DELETE CASCADE
+    user_id    BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    segment_id BIGINT REFERENCES segments (id) ON DELETE CASCADE,
+    UNIQUE (user_id, segment_id)
 );
