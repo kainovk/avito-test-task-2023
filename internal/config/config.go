@@ -31,6 +31,7 @@ func MustLoad() *Config {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		log.Println("CONFIG_PATH is not set, using environment variables")
+		configPath = "config/local.yml"
 	}
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {

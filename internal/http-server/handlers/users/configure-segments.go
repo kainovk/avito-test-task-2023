@@ -2,16 +2,17 @@ package users
 
 import (
 	"errors"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
 
-	"avito-test-task-2023/internal/lib/api/response"
-	"avito-test-task-2023/internal/lib/logger/sl"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+
+	"avito-test-task-2023/internal/lib/api/response"
+	"avito-test-task-2023/internal/lib/logger/sl"
 )
 
 type ConfigureSegmentsRequest struct {
