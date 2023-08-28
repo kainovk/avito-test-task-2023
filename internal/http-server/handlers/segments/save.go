@@ -1,4 +1,4 @@
-package users
+package segments
 
 import (
 	"errors"
@@ -23,13 +23,13 @@ type SaveResponse struct {
 	resp.Response
 }
 
-type UserSaver interface {
-	SaveUser(name string) error
+type SegmentSaver interface {
+	SaveSegment(name string) error
 }
 
-func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
+func NewSegmentSaver(log *slog.Logger, segmentSaver SegmentSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.users.save.NewUserSaver"
+		const op = "handlers.segments.save.NewSegmentSaver"
 
 		log = log.With(
 			slog.String("op", op),
@@ -63,21 +63,21 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 			return
 		}
 
-		err = userSaver.SaveUser(req.Name)
-		if errors.Is(err, storage.ErrUserExists) {
-			log.Info("user already exists", slog.String("name", req.Name))
+		err = segmentSaver.SaveSegment(req.Name)
+		if errors.Is(err, storage.ErrSegmentExists) {
+			log.Info("segment already exists", slog.String("name", req.Name))
 
-			render.JSON(w, r, resp.Error("user already exists"))
+			render.JSON(w, r, resp.Error("segment already exists"))
 			return
 		}
 		if err != nil {
-			log.Error("failed to create user", sl.Err(err))
+			log.Error("failed to create segment", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to create user"))
+			render.JSON(w, r, resp.Error("failed to create segment"))
 			return
 		}
 
-		log.Info("user created")
+		log.Info("segment created")
 
 		render.JSON(w, r, SaveResponse{
 			Response: resp.OK(),

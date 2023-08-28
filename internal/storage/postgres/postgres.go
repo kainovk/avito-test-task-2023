@@ -1,12 +1,15 @@
 package postgres
 
 import (
-	"avito-test-task-2023/internal/config"
-	"avito-test-task-2023/internal/storage"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/lib/pq"
+
+	"avito-test-task-2023/internal/config"
+	"avito-test-task-2023/internal/models/segment"
+	"avito-test-task-2023/internal/models/user"
+	"avito-test-task-2023/internal/storage"
 )
 
 type Storage struct {
@@ -55,7 +58,7 @@ func initSchema(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS segments
 		(
 			id   BIGSERIAL PRIMARY KEY,
-			name VARCHAR(512) UNIQUE NOT NULL
+			slug VARCHAR(512) UNIQUE NOT NULL
 		);
 		
 		CREATE TABLE IF NOT EXISTS user_segments
@@ -90,7 +93,7 @@ func (s *Storage) SaveUser(name string) error {
 	return nil
 }
 
-func (s *Storage) GetUser(id int64) (*sql.Row, error) {
+func (s *Storage) GetUser(id int64) (*user.User, error) {
 	const op = "storage.postgres.GetUser"
 
 	stmt, err := s.db.Prepare("SELECT * FROM users WHERE id = $1")
@@ -107,7 +110,13 @@ func (s *Storage) GetUser(id int64) (*sql.Row, error) {
 		return nil, fmt.Errorf("%s: execute statement: %w", op, err)
 	}
 
-	return row, nil
+	var usr *user.User
+	err = row.Scan(&usr.ID, &usr.Name)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to scan user name: %w", op, err)
+	}
+
+	return usr, nil
 }
 
 func (s *Storage) DeleteUser(userId string) error {
@@ -125,10 +134,10 @@ func (s *Storage) DeleteUser(userId string) error {
 	return nil
 }
 
-func (s *Storage) SaveSegment(name string) error {
+func (s *Storage) SaveSegment(slug string) error {
 	const op = "storage.postgres.SaveSegment"
 
-	_, err := s.db.Exec(`INSERT INTO segments(name) VALUES ($1);`, name)
+	_, err := s.db.Exec(`INSERT INTO segments(slug) VALUES ($1);`, slug)
 	if err != nil {
 		// handle unique constraint error
 		var pqErr *pq.Error
@@ -142,7 +151,7 @@ func (s *Storage) SaveSegment(name string) error {
 	return nil
 }
 
-func (s *Storage) GetSegment(id int64) (*sql.Row, error) {
+func (s *Storage) GetSegment(id int64) (*segment.Segment, error) {
 	const op = "storage.postgres.GetSegment"
 
 	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE id = $1")
@@ -159,18 +168,24 @@ func (s *Storage) GetSegment(id int64) (*sql.Row, error) {
 		return nil, fmt.Errorf("%s: execute statement: %w", op, err)
 	}
 
-	return row, nil
+	var seg *segment.Segment
+	err = row.Scan(&seg.ID, &seg.Slug)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to scan segment name: %w", op, err)
+	}
+
+	return seg, nil
 }
 
-func (s *Storage) GetSegmentByName(name string) (*sql.Row, error) {
-	const op = "storage.postgres.GetSegmentByName"
+func (s *Storage) GetSegmentBySlug(slug string) (*segment.Segment, error) {
+	const op = "storage.postgres.GetSegmentBySlug"
 
-	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE name = $1")
+	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE slug = $1")
 	if err != nil {
 		return nil, fmt.Errorf("%s: prepare statement: %w", op, err)
 	}
 
-	row := stmt.QueryRow(name)
+	row := stmt.QueryRow(slug)
 	if row.Err() != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, storage.ErrSegmentNotFound
@@ -179,7 +194,34 @@ func (s *Storage) GetSegmentByName(name string) (*sql.Row, error) {
 		return nil, fmt.Errorf("%s: execute statement: %w", op, err)
 	}
 
-	return row, nil
+	seg := &segment.Segment{}
+	err = row.Scan(&seg.ID, &seg.Slug)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to scan segment name: %w", op, err)
+	}
+
+	return seg, nil
+}
+
+func (s *Storage) GetSegments() ([]*segment.Segment, error) {
+	const op = "storage.postgres.GetSegments"
+
+	rows, err := s.db.Query(`SELECT id, slug FROM segments`)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var segments []*segment.Segment
+	for rows.Next() {
+		seg := &segment.Segment{}
+		if err := rows.Scan(&seg.ID, &seg.Slug); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		segments = append(segments, seg)
+	}
+
+	return segments, nil
 }
 
 func (s *Storage) DeleteSegment(segmentId string) error {
@@ -197,10 +239,10 @@ func (s *Storage) DeleteSegment(segmentId string) error {
 	return nil
 }
 
-func (s *Storage) DeleteSegmentByName(segmentName string) error {
-	const op = "storage.postgres.DeleteSegmentByName"
+func (s *Storage) DeleteSegmentBySlug(slug string) error {
+	const op = "storage.postgres.DeleteSegmentBySlug"
 
-	res, err := s.db.Exec(`DELETE FROM segments WHERE name = $1;`, segmentName)
+	res, err := s.db.Exec(`DELETE FROM segments WHERE slug = $1;`, slug)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -231,21 +273,16 @@ func (s *Storage) AddUserSegments(userID int64, segmentIDs []int64) error {
 	return nil
 }
 
-func (s *Storage) AddUserSegmentsByName(userID int64, segmentNames []string) error {
-	const op = "storage.postgres.AddUserSegmentsByName"
+func (s *Storage) AddUserSegmentsBySlugs(userID int64, slugs []string) error {
+	const op = "storage.postgres.AddUserSegmentsBySlugs"
 
-	for _, segmentName := range segmentNames {
-		segmentRow, err := s.GetSegmentByName(segmentName)
+	for _, slug := range slugs {
+		seg, err := s.GetSegmentBySlug(slug)
 		if err != nil {
 			continue
 		}
 
-		var segmentId int64
-		if err := segmentRow.Scan(&segmentId); err != nil {
-			return fmt.Errorf("error scanning segment")
-		}
-
-		_, err = s.db.Exec(`INSERT INTO user_segments(user_id, segment_id) VALUES ($1, $2);`, userID, segmentId)
+		_, err = s.db.Exec(`INSERT INTO user_segments(user_id, segment_id) VALUES ($1, $2);`, userID, seg.ID)
 		if err != nil {
 			// handle unique constraint error
 			var pqErr *pq.Error
@@ -260,21 +297,16 @@ func (s *Storage) AddUserSegmentsByName(userID int64, segmentNames []string) err
 	return nil
 }
 
-func (s *Storage) RemoveUserSegmentsByName(userID int64, segmentNames []string) error {
-	const op = "storage.postgres.RemoveUserSegmentsByName"
+func (s *Storage) DeleteUserSegmentsBySlugs(userID int64, slugs []string) error {
+	const op = "storage.postgres.DeleteUserSegmentsBySlugs"
 
-	for _, segmentName := range segmentNames {
-		segmentRow, err := s.GetSegmentByName(segmentName)
+	for _, slug := range slugs {
+		seg, err := s.GetSegmentBySlug(slug)
 		if err != nil {
 			continue
 		}
 
-		var segmentID int64
-		if err := segmentRow.Scan(&segmentID); err != nil {
-			return fmt.Errorf("error scanning segment")
-		}
-
-		_, err = s.db.Exec(`DELETE FROM user_segments WHERE user_id = $1 AND segment_id = $2;`, userID, segmentID)
+		_, err = s.db.Exec(`DELETE FROM user_segments WHERE user_id = $1 AND segment_id = $2;`, userID, seg.ID)
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
@@ -283,11 +315,11 @@ func (s *Storage) RemoveUserSegmentsByName(userID int64, segmentNames []string) 
 	return nil
 }
 
-func (s *Storage) GetUserSegments(userID int64) ([]string, error) {
+func (s *Storage) GetUserSegments(userID int64) ([]*segment.Segment, error) {
 	const op = "storage.postgres.GetUserSegments"
 
 	rows, err := s.db.Query(`
-        SELECT s.name
+        SELECT s.id, s.slug
         FROM user_segments AS usr
         JOIN segments AS s ON usr.segment_id = s.id
         WHERE usr.user_id = $1;
@@ -295,18 +327,36 @@ func (s *Storage) GetUserSegments(userID int64) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	defer rows.Close()
 
-	var segments []string
+	var segments []*segment.Segment
 	for rows.Next() {
-		var segmentName string
-		if err := rows.Scan(&segmentName); err != nil {
+		seg := &segment.Segment{}
+		if err := rows.Scan(&seg.ID, &seg.Slug); err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
-		segments = append(segments, segmentName)
+		segments = append(segments, seg)
 	}
 
 	return segments, nil
+}
+
+func (s *Storage) ConfigureUserSegments(
+	userID int64, segAdd []string, segDel []string,
+) error {
+	// TODO: tx
+	const op = "storage.postgres.ConfigureUserSegments"
+
+	err := s.AddUserSegmentsBySlugs(userID, segAdd)
+	if err != nil {
+		return fmt.Errorf("%s: failed to add segments to user: %w", op, err)
+	}
+
+	err = s.DeleteUserSegmentsBySlugs(userID, segDel)
+	if err != nil {
+		return fmt.Errorf("%s: failed to delete segments from user: %w", op, err)
+	}
+
+	return nil
 }
 
 func (s *Storage) Close() error {

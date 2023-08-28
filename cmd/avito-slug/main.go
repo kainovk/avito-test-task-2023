@@ -1,18 +1,18 @@
 package main
 
 import (
-	save "avito-test-task-2023/internal/http-server/handlers/users"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
-	"avito-test-task-2023/internal/lib/logger/handlers/slogpretty"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"avito-test-task-2023/internal/config"
+	"avito-test-task-2023/internal/http-server/handlers/segments"
+	"avito-test-task-2023/internal/http-server/handlers/users"
 	mwLogger "avito-test-task-2023/internal/http-server/middleware/logger"
+	"avito-test-task-2023/internal/lib/logger/handlers/slogpretty"
 	"avito-test-task-2023/internal/lib/logger/sl"
 	"avito-test-task-2023/internal/storage/postgres"
 )
@@ -25,9 +25,13 @@ const (
 
 func main() {
 	cfg := config.MustLoad()
-	fmt.Printf("server is running: %s\n", cfg)
 
 	log := setupLogger(cfg.Env)
+
+	log.Info(
+		"starting application",
+		slog.String("env", cfg.Env),
+	)
 
 	storage, err := postgres.New(cfg.Storage)
 	if err != nil {
@@ -44,7 +48,17 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.URLFormat)
 
-	r.Post("/users", save.New(log, storage))
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", users.NewUserSaver(log, storage))
+		r.Post("/{user_id}/configure-segments", users.NewUserSegmentConfigurer(log, storage))
+		r.Get("/{user_id}/segments", users.NewUserSegmentsGetter(log, storage))
+	})
+
+	r.Route("/segments", func(r chi.Router) {
+		r.Post("/", segments.NewSegmentSaver(log, storage))
+		r.Get("/", segments.NewSegmentGetter(log, storage))
+		r.Delete("/{slug}", segments.NewSegmentDeleter(log, storage))
+	})
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
