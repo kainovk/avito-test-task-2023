@@ -1,6 +1,7 @@
 package main
 
 import (
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "avito-test-task-2023/docs"
 	"avito-test-task-2023/internal/config"
 	"avito-test-task-2023/internal/http-server/handlers/segments"
 	"avito-test-task-2023/internal/http-server/handlers/users"
@@ -23,6 +25,10 @@ const (
 	envProd  = "prod"
 )
 
+// @title			Avito Test Task
+// @version			1.0
+// @description		User Segments Service
+// @host			localhost:8080
 func main() {
 	cfg := config.MustLoad()
 
@@ -59,6 +65,8 @@ func main() {
 		r.Get("/", segments.NewSegmentGetter(log, storage))
 		r.Delete("/{slug}", segments.NewSegmentDeleter(log, storage))
 	})
+
+	r.Get("/swagger/*", httpSwagger.Handler())
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 

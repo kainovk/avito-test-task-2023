@@ -7,6 +7,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Response represents a generic API response.
+// @typedef Response
+// @property {string} status.required - The status of the response ("OK" or "Error").
+// @property {string} [error] - The error message (if applicable).
 type Response struct {
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`

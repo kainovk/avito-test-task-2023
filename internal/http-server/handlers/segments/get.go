@@ -20,6 +20,15 @@ type SegmentGetter interface {
 	GetSegments() ([]*segment.Segment, error)
 }
 
+// NewSegmentGetter handles the HTTP request for retrieving user segments.
+//
+// @Summary Get user segments
+// @Description Retrieve a list of user segments.
+// @Tags segments
+// @Accept json
+// @Produce json
+// @Success 200 {object} GetResponse
+// @Router /segments [get]
 func NewSegmentGetter(log *slog.Logger, segmentGetter SegmentGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.segments.get.NewSegmentGetter"

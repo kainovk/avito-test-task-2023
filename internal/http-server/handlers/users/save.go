@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 
-	resp "avito-test-task-2023/internal/lib/api/response"
+	"avito-test-task-2023/internal/lib/api/response"
 	"avito-test-task-2023/internal/lib/logger/sl"
 	"avito-test-task-2023/internal/storage"
 )
@@ -20,13 +20,23 @@ type SaveRequest struct {
 }
 
 type SaveResponse struct {
-	resp.Response
+	response.Response
 }
 
 type UserSaver interface {
 	SaveUser(name string) error
 }
 
+// NewUserSaver handles the HTTP request for saving a user.
+//
+// @Summary Save a user
+// @Description Save a new user with the provided name.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body SaveRequest true "Request body"
+// @Success 200 {object} SaveResponse
+// @Router /users [post]
 func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.users.save.NewUserSaver"
@@ -42,13 +52,13 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		if errors.Is(err, io.EOF) {
 			log.Error("request body is empty")
 
-			render.JSON(w, r, resp.Error("empty request"))
+			render.JSON(w, r, response.Error("empty request"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to decode request"))
+			render.JSON(w, r, response.Error("failed to decode request"))
 			return
 		}
 
@@ -59,7 +69,7 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 
 			log.Error("invalid request", sl.Err(err))
 
-			render.JSON(w, r, resp.ValidationError(validateErr))
+			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
 
@@ -67,20 +77,20 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Info("user already exists", slog.String("name", req.Name))
 
-			render.JSON(w, r, resp.Error("user already exists"))
+			render.JSON(w, r, response.Error("user already exists"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to create user", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to create user"))
+			render.JSON(w, r, response.Error("failed to create user"))
 			return
 		}
 
 		log.Info("user created")
 
 		render.JSON(w, r, SaveResponse{
-			Response: resp.OK(),
+			Response: response.OK(),
 		})
 	}
 }

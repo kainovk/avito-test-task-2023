@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 
-	resp "avito-test-task-2023/internal/lib/api/response"
+	"avito-test-task-2023/internal/lib/api/response"
 	"avito-test-task-2023/internal/lib/logger/sl"
 	"avito-test-task-2023/internal/models/segment"
 )
@@ -22,6 +22,16 @@ type UserSegmentsGetter interface {
 	GetUserSegments(userID int64) ([]*segment.Segment, error)
 }
 
+// NewUserSegmentsGetter handles the HTTP request for retrieving segments of a user.
+//
+// @Summary Get user segments
+// @Description Retrieve segments associated with a user by user ID.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user_id path int true "User ID"
+// @Success 200 {object} GetSegmentsResponse
+// @Router /users/{user_id}/segments [get]
 func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.users.get-segments.NewUserSegmentsGetter"
@@ -35,7 +45,7 @@ func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGett
 		if userIDStr == "" {
 			log.Info("user_id param is empty")
 
-			render.JSON(w, r, resp.Error("invalid request"))
+			render.JSON(w, r, response.Error("invalid request"))
 			return
 		}
 
@@ -43,14 +53,14 @@ func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGett
 		if err != nil {
 			log.Error("failed to parse user_id")
 
-			render.JSON(w, r, resp.Error("invalid request"))
+			render.JSON(w, r, response.Error("invalid request"))
 		}
 
 		segments, err := userSegmentsGetter.GetUserSegments(int64(userID))
 		if err != nil {
 			log.Error("failed to get user segments", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to get user segments"))
+			render.JSON(w, r, response.Error("failed to get user segments"))
 			return
 		}
 

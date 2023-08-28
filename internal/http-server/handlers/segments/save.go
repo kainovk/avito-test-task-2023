@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 
-	resp "avito-test-task-2023/internal/lib/api/response"
+	"avito-test-task-2023/internal/lib/api/response"
 	"avito-test-task-2023/internal/lib/logger/sl"
 	"avito-test-task-2023/internal/storage"
 )
@@ -20,13 +20,23 @@ type SaveRequest struct {
 }
 
 type SaveResponse struct {
-	resp.Response
+	response.Response
 }
 
 type SegmentSaver interface {
 	SaveSegment(name string) error
 }
 
+// NewSegmentSaver handles the HTTP request for saving a segment.
+//
+// @Summary Save a segment
+// @Description Save a new segment with the provided name.
+// @Tags segments
+// @Accept json
+// @Produce json
+// @Param request body SaveRequest true "Request body"
+// @Success 200 {object} SaveResponse
+// @Router /segments [post]
 func NewSegmentSaver(log *slog.Logger, segmentSaver SegmentSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.segments.save.NewSegmentSaver"
@@ -42,13 +52,13 @@ func NewSegmentSaver(log *slog.Logger, segmentSaver SegmentSaver) http.HandlerFu
 		if errors.Is(err, io.EOF) {
 			log.Error("request body is empty")
 
-			render.JSON(w, r, resp.Error("empty request"))
+			render.JSON(w, r, response.Error("empty request"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to decode request"))
+			render.JSON(w, r, response.Error("failed to decode request"))
 			return
 		}
 
@@ -59,7 +69,7 @@ func NewSegmentSaver(log *slog.Logger, segmentSaver SegmentSaver) http.HandlerFu
 
 			log.Error("invalid request", sl.Err(err))
 
-			render.JSON(w, r, resp.ValidationError(validateErr))
+			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
 
@@ -67,20 +77,20 @@ func NewSegmentSaver(log *slog.Logger, segmentSaver SegmentSaver) http.HandlerFu
 		if errors.Is(err, storage.ErrSegmentExists) {
 			log.Info("segment already exists", slog.String("name", req.Name))
 
-			render.JSON(w, r, resp.Error("segment already exists"))
+			render.JSON(w, r, response.Error("segment already exists"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to create segment", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to create segment"))
+			render.JSON(w, r, response.Error("failed to create segment"))
 			return
 		}
 
 		log.Info("segment created")
 
 		render.JSON(w, r, SaveResponse{
-			Response: resp.OK(),
+			Response: response.OK(),
 		})
 	}
 }

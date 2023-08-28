@@ -1,0 +1,205 @@
+definitions:
+  segments.DeleteResponse:
+    description: Response structure for segment deletion.
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  segments.GetResponse:
+    properties:
+      segments:
+        items:
+          type: string
+        type: array
+    type: object
+  segments.SaveRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  segments.SaveResponse:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  users.ConfigureSegmentsRequest:
+    properties:
+      segments_to_add:
+        items:
+          type: string
+        type: array
+      segments_to_delete:
+        items:
+          type: string
+        type: array
+    type: object
+  users.ConfigureSegmentsResponse:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  users.GetSegmentsResponse:
+    properties:
+      segments:
+        items:
+          type: string
+        type: array
+    type: object
+  users.SaveRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  users.SaveResponse:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: User Segments Service
+  title: Avito Test Task
+  version: "1.0"
+paths:
+  /segments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of user segments.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/segments.GetResponse'
+      summary: Get user segments
+      tags:
+      - segments
+    post:
+      consumes:
+      - application/json
+      description: Save a new segment with the provided name.
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/segments.SaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/segments.SaveResponse'
+      summary: Save a segment
+      tags:
+      - segments
+  /segments/{slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a segment by its slug.
+      parameters:
+      - description: Segment slug to delete
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/segments.DeleteResponse'
+      summary: Delete a segment
+      tags:
+      - segments
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Save a new user with the provided name.
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.SaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.SaveResponse'
+      summary: Save a user
+      tags:
+      - users
+  /users/{user_id}/configure-segments:
+    post:
+      consumes:
+      - application/json
+      description: Configure user segments by adding and/or deleting segments for
+        a user.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.ConfigureSegmentsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.ConfigureSegmentsResponse'
+      summary: Configure user segments
+      tags:
+      - users
+  /users/{user_id}/segments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve segments associated with a user by user ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.GetSegmentsResponse'
+      summary: Get user segments
+      tags:
+      - users
+swagger: "2.0"
