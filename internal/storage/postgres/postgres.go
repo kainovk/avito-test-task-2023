@@ -162,10 +162,45 @@ func (s *Storage) GetSegment(id int64) (*sql.Row, error) {
 	return row, nil
 }
 
+func (s *Storage) GetSegmentByName(name string) (*sql.Row, error) {
+	const op = "storage.postgres.GetSegmentByName"
+
+	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE name = $1")
+	if err != nil {
+		return nil, fmt.Errorf("%s: prepare statement: %w", op, err)
+	}
+
+	row := stmt.QueryRow(name)
+	if row.Err() != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storage.ErrSegmentNotFound
+		}
+
+		return nil, fmt.Errorf("%s: execute statement: %w", op, err)
+	}
+
+	return row, nil
+}
+
 func (s *Storage) DeleteSegment(segmentId string) error {
 	const op = "storage.postgres.DeleteSegment"
 
 	res, err := s.db.Exec(`DELETE FROM segments WHERE id = $1;`, segmentId)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if rowsAffected, _ := res.RowsAffected(); rowsAffected == 0 {
+		return fmt.Errorf("%s: %w", op, storage.ErrSegmentNotExists)
+	}
+
+	return nil
+}
+
+func (s *Storage) DeleteSegmentByName(segmentName string) error {
+	const op = "storage.postgres.DeleteSegmentByName"
+
+	res, err := s.db.Exec(`DELETE FROM segments WHERE name = $1;`, segmentName)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -189,6 +224,58 @@ func (s *Storage) AddUserSegments(userID int64, segmentIDs []int64) error {
 				return fmt.Errorf("%s: %w", op, storage.ErrUserAlreadyHaveSegment)
 			}
 
+			return fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Storage) AddUserSegmentsByName(userID int64, segmentNames []string) error {
+	const op = "storage.postgres.AddUserSegmentsByName"
+
+	for _, segmentName := range segmentNames {
+		segmentRow, err := s.GetSegmentByName(segmentName)
+		if err != nil {
+			continue
+		}
+
+		var segmentId int64
+		if err := segmentRow.Scan(&segmentId); err != nil {
+			return fmt.Errorf("error scanning segment")
+		}
+
+		_, err = s.db.Exec(`INSERT INTO user_segments(user_id, segment_id) VALUES ($1, $2);`, userID, segmentId)
+		if err != nil {
+			// handle unique constraint error
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+				return fmt.Errorf("%s: %w", op, storage.ErrUserAlreadyHaveSegment)
+			}
+
+			return fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Storage) RemoveUserSegmentsByName(userID int64, segmentNames []string) error {
+	const op = "storage.postgres.RemoveUserSegmentsByName"
+
+	for _, segmentName := range segmentNames {
+		segmentRow, err := s.GetSegmentByName(segmentName)
+		if err != nil {
+			continue
+		}
+
+		var segmentID int64
+		if err := segmentRow.Scan(&segmentID); err != nil {
+			return fmt.Errorf("error scanning segment")
+		}
+
+		_, err = s.db.Exec(`DELETE FROM user_segments WHERE user_id = $1 AND segment_id = $2;`, userID, segmentID)
+		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
 	}
