@@ -1,13 +1,13 @@
 env: "local" # local / dev / prod
 
 http_server:
-  address: "localhost:8080"
+  address: "0.0.0.0:8080"
   timeout: 4s
   idle_timeout: 60s
 
 storage:
-  host: "localhost"
-  port: "5444"
+  host: "localhost" # container name
+  port: "5432"
   database: "avito_db"
   username: "postgres"
   password: "root"
