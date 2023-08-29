@@ -15,5 +15,6 @@ CREATE TABLE IF NOT EXISTS user_segments
     id         BIGSERIAL PRIMARY KEY,
     user_id    BIGINT REFERENCES users (id) ON DELETE CASCADE,
     segment_id BIGINT REFERENCES segments (id) ON DELETE CASCADE,
+    delete_at  TIMESTAMP DEFAULT NULL,
     UNIQUE (user_id, segment_id)
 );

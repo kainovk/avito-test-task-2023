@@ -13,6 +13,13 @@ definitions:
           type: string
         type: array
     type: object
+  segments.GetResponseFailed:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
   segments.SaveRequest:
     properties:
       name:
@@ -31,7 +38,7 @@ definitions:
     properties:
       segments_to_add:
         items:
-          type: string
+          $ref: '#/definitions/users.SegmentRequest'
         type: array
       segments_to_delete:
         items:
@@ -52,6 +59,13 @@ definitions:
           type: string
         type: array
     type: object
+  users.GetSegmentsResponseFailed:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
   users.SaveRequest:
     properties:
       name:
@@ -65,6 +79,15 @@ definitions:
         type: string
       status:
         type: string
+    type: object
+  users.SegmentRequest:
+    properties:
+      delete_at:
+        type: string
+      slug:
+        type: string
+    required:
+    - slug
     type: object
 host: localhost:8080
 info:
@@ -88,7 +111,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/segments.GetResponse'
+            $ref: '#/definitions/segments.GetResponseFailed'
       summary: Get user segments
       tags:
       - segments
@@ -241,11 +264,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/users.GetSegmentsResponse'
+            $ref: '#/definitions/users.GetSegmentsResponseFailed'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/users.GetSegmentsResponse'
+            $ref: '#/definitions/users.GetSegmentsResponseFailed'
       summary: Get user segments
       tags:
       - users

@@ -2,10 +2,12 @@ package users
 
 import (
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,8 +18,13 @@ import (
 )
 
 type ConfigureSegmentsRequest struct {
-	SegmentsToAdd    []string `json:"segments_to_add"`
-	SegmentsToDelete []string `json:"segments_to_delete"`
+	SegmentsToAdd    []SegmentRequest `json:"segments_to_add"`
+	SegmentsToDelete []string         `json:"segments_to_delete"`
+}
+
+type SegmentRequest struct {
+	Slug     string     `json:"slug" validate:"required"`
+	DeleteAt *time.Time `json:"delete_at"`
 }
 
 type ConfigureSegmentsResponse struct {
@@ -25,7 +32,7 @@ type ConfigureSegmentsResponse struct {
 }
 
 type UserSegmentConfigurer interface {
-	ConfigureUserSegments(userID int64, segAdd []string, segDel []string) error
+	ConfigureUserSegments(userID int64, segAdd []SegmentRequest, segDel []string) error
 }
 
 // NewUserSegmentConfigurer handles the HTTP request for configuring user segments.
@@ -64,7 +71,7 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 			log.Error("failed to decode request body", sl.Err(err))
 
 			render.Status(r, http.StatusBadRequest)
-			render.JSON(w, r, response.Error("failed to decode request"))
+			render.JSON(w, r, response.Error("failed to decode request body"))
 			return
 		}
 
@@ -85,6 +92,16 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
+		}
+
+		if err := validator.New().Struct(req); err != nil {
+			validateErr := err.(validator.ValidationErrors)
+
+			log.Error("invalid request", sl.Err(err))
+
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.ValidationError(validateErr))
+			return
 		}
 
 		err = userSegmentConfigurer.ConfigureUserSegments(int64(userID), req.SegmentsToAdd, req.SegmentsToDelete)

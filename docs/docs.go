@@ -39,7 +39,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/segments.GetResponse"
+                            "$ref": "#/definitions/segments.GetResponseFailed"
                         }
                     }
                 }
@@ -270,13 +270,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                            "$ref": "#/definitions/users.GetSegmentsResponseFailed"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                            "$ref": "#/definitions/users.GetSegmentsResponseFailed"
                         }
                     }
                 }
@@ -303,6 +303,17 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "segments.GetResponseFailed": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -334,7 +345,7 @@ const docTemplate = `{
                 "segments_to_add": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/users.SegmentRequest"
                     }
                 },
                 "segments_to_delete": {
@@ -367,6 +378,17 @@ const docTemplate = `{
                 }
             }
         },
+        "users.GetSegmentsResponseFailed": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "users.SaveRequest": {
             "type": "object",
             "required": [
@@ -385,6 +407,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.SegmentRequest": {
+            "type": "object",
+            "required": [
+                "slug"
+            ],
+            "properties": {
+                "delete_at": {
+                    "type": "string"
+                },
+                "slug": {
                     "type": "string"
                 }
             }

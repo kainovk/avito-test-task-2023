@@ -31,7 +31,7 @@ type SegmentGetter interface {
 // @Tags segments
 // @Accept json
 // @Produce json
-// @Success 200 {object} Response
+// @Success 200 {object} GetResponse
 // @Failure 500 {object} GetResponseFailed
 // @Router /segments [get]
 func NewSegmentGetter(log *slog.Logger, segmentGetter SegmentGetter) http.HandlerFunc {

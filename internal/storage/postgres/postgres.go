@@ -1,15 +1,16 @@
 package postgres
 
 import (
+	"avito-test-task-2023/internal/config"
+	"avito-test-task-2023/internal/http-server/handlers/users"
+	"avito-test-task-2023/internal/models/segment"
+	"avito-test-task-2023/internal/models/user"
+	"avito-test-task-2023/internal/storage"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/lib/pq"
-
-	"avito-test-task-2023/internal/config"
-	"avito-test-task-2023/internal/models/segment"
-	"avito-test-task-2023/internal/models/user"
-	"avito-test-task-2023/internal/storage"
+	"time"
 )
 
 type Storage struct {
@@ -66,6 +67,7 @@ func initSchema(db *sql.DB) error {
 			id         BIGSERIAL PRIMARY KEY,
 			user_id    BIGINT REFERENCES users (id) ON DELETE CASCADE,
 			segment_id BIGINT REFERENCES segments (id) ON DELETE CASCADE,
+			delete_at  TIMESTAMP DEFAULT NULL,
 			UNIQUE (user_id, segment_id)
 		);
 	`)
@@ -154,7 +156,7 @@ func (s *Storage) SaveSegment(slug string) error {
 func (s *Storage) GetSegment(id int64) (*segment.Segment, error) {
 	const op = "storage.postgres.GetSegment"
 
-	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE id = $1")
+	stmt, err := s.db.Prepare("SELECT id, slug FROM segments WHERE id = $1")
 	if err != nil {
 		return nil, fmt.Errorf("%s: prepare statement: %w", op, err)
 	}
@@ -180,7 +182,7 @@ func (s *Storage) GetSegment(id int64) (*segment.Segment, error) {
 func (s *Storage) GetSegmentBySlug(slug string) (*segment.Segment, error) {
 	const op = "storage.postgres.GetSegmentBySlug"
 
-	stmt, err := s.db.Prepare("SELECT * FROM segments WHERE slug = $1")
+	stmt, err := s.db.Prepare("SELECT id, slug FROM segments WHERE slug = $1")
 	if err != nil {
 		return nil, fmt.Errorf("%s: prepare statement: %w", op, err)
 	}
@@ -273,16 +275,18 @@ func (s *Storage) AddUserSegments(userID int64, segmentIDs []int64) error {
 	return nil
 }
 
-func (s *Storage) AddUserSegmentsBySlugs(userID int64, slugs []string) error {
+func (s *Storage) AddUserSegmentsBySlugs(userID int64, segmentsToAdd []users.SegmentRequest) error {
 	const op = "storage.postgres.AddUserSegmentsBySlugs"
 
-	for _, slug := range slugs {
-		seg, err := s.GetSegmentBySlug(slug)
+	for _, segmentToAdd := range segmentsToAdd {
+		seg, err := s.GetSegmentBySlug(segmentToAdd.Slug)
 		if err != nil {
 			continue
 		}
 
-		_, err = s.db.Exec(`INSERT INTO user_segments(user_id, segment_id) VALUES ($1, $2);`, userID, seg.ID)
+		_, err = s.db.Exec(`
+			INSERT INTO user_segments(user_id, segment_id, delete_at) VALUES ($1, $2, $3);
+		`, userID, seg.ID, segmentToAdd.DeleteAt)
 		if err != nil {
 			// handle unique constraint error
 			var pqErr *pq.Error
@@ -340,9 +344,7 @@ func (s *Storage) GetUserSegments(userID int64) ([]*segment.Segment, error) {
 	return segments, nil
 }
 
-func (s *Storage) ConfigureUserSegments(
-	userID int64, segAdd []string, segDel []string,
-) error {
+func (s *Storage) ConfigureUserSegments(userID int64, segAdd []users.SegmentRequest, segDel []string) error {
 	// TODO: tx
 	const op = "storage.postgres.ConfigureUserSegments"
 
@@ -357,6 +359,27 @@ func (s *Storage) ConfigureUserSegments(
 	}
 
 	return nil
+}
+
+func (s *Storage) DeleteSegmentsTTL() (int64, error) {
+	const op = "storage.postgres.DeleteSegmentsTTL"
+
+	currentTime := time.Now()
+
+	res, err := s.db.Exec(`
+		DELETE FROM user_segments 
+		WHERE delete_at IS NOT NULL AND delete_at < $1
+	`, currentTime)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	deleted, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return deleted, nil
 }
 
 func (s *Storage) Close() error {

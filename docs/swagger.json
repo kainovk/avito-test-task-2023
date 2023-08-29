@@ -31,7 +31,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/segments.GetResponse"
+                            "$ref": "#/definitions/segments.GetResponseFailed"
                         }
                     }
                 }
@@ -262,13 +262,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                            "$ref": "#/definitions/users.GetSegmentsResponseFailed"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                            "$ref": "#/definitions/users.GetSegmentsResponseFailed"
                         }
                     }
                 }
@@ -295,6 +295,17 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "segments.GetResponseFailed": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -326,7 +337,7 @@
                 "segments_to_add": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/users.SegmentRequest"
                     }
                 },
                 "segments_to_delete": {
@@ -359,6 +370,17 @@
                 }
             }
         },
+        "users.GetSegmentsResponseFailed": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "users.SaveRequest": {
             "type": "object",
             "required": [
@@ -377,6 +399,20 @@
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.SegmentRequest": {
+            "type": "object",
+            "required": [
+                "slug"
+            ],
+            "properties": {
+                "delete_at": {
+                    "type": "string"
+                },
+                "slug": {
                     "type": "string"
                 }
             }

@@ -1,13 +1,15 @@
 package main
 
 import (
-	httpSwagger "github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	_ "avito-test-task-2023/docs"
 	"avito-test-task-2023/internal/config"
@@ -45,7 +47,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
+	go func() {
+		for {
+			deleted, err := storage.DeleteSegmentsTTL()
+			if err != nil {
+				log.Error("failed to delete segments (segments TTL)", err)
+			}
+
+			log.Info("TTL scheduler", slog.String("rows_deleted", strconv.FormatInt(deleted, 10)))
+			time.Sleep(1 * time.Minute)
+		}
+	}()
+
+	log.Info("delete scheduler started (segments TTL)")
 
 	r := chi.NewRouter()
 
