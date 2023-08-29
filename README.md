@@ -30,7 +30,7 @@ or simply rename [`template.env`](template.env) to `.env` with your configuratio
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=root
 POSTGRES_DB=avito_db
-CONFIG_PATH=config/local.yml
+CONFIG_PATH=config/prod.yml
 ```
 
 or simply rename [`template.env`](template.env) to `.env` with your configuration
