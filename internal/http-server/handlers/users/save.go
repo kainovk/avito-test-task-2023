@@ -36,6 +36,8 @@ type UserSaver interface {
 // @Produce json
 // @Param request body SaveRequest true "Request body"
 // @Success 200 {object} SaveResponse
+// @Failure 400 {object} SaveResponse
+// @Failure 500 {object} SaveResponse
 // @Router /users [post]
 func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -52,12 +54,14 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		if errors.Is(err, io.EOF) {
 			log.Error("request body is empty")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("empty request"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("failed to decode request"))
 			return
 		}
@@ -69,6 +73,7 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 
 			log.Error("invalid request", sl.Err(err))
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
@@ -77,12 +82,14 @@ func NewUserSaver(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Info("user already exists", slog.String("name", req.Name))
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("user already exists"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to create user", sl.Err(err))
 
+			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("failed to create user"))
 			return
 		}

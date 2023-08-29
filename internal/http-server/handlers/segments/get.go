@@ -7,13 +7,17 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 
-	resp "avito-test-task-2023/internal/lib/api/response"
+	"avito-test-task-2023/internal/lib/api/response"
 	"avito-test-task-2023/internal/lib/logger/sl"
 	"avito-test-task-2023/internal/models/segment"
 )
 
 type GetResponse struct {
 	Segments []string `json:"segments"`
+}
+
+type GetResponseFailed struct {
+	response.Response
 }
 
 type SegmentGetter interface {
@@ -27,7 +31,8 @@ type SegmentGetter interface {
 // @Tags segments
 // @Accept json
 // @Produce json
-// @Success 200 {object} GetResponse
+// @Success 200 {object} Response
+// @Failure 500 {object} GetResponseFailed
 // @Router /segments [get]
 func NewSegmentGetter(log *slog.Logger, segmentGetter SegmentGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +47,8 @@ func NewSegmentGetter(log *slog.Logger, segmentGetter SegmentGetter) http.Handle
 		if err != nil {
 			log.Error("failed to get user segments", sl.Err(err))
 
-			render.JSON(w, r, resp.Error("failed to get user segments"))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("failed to get user segments"))
 			return
 		}
 
@@ -53,10 +59,10 @@ func NewSegmentGetter(log *slog.Logger, segmentGetter SegmentGetter) http.Handle
 			segmentSlugs[i] = seg.Slug
 		}
 
-		response := GetResponse{
+		resp := GetResponse{
 			Segments: segmentSlugs,
 		}
 
-		render.JSON(w, r, response)
+		render.JSON(w, r, resp)
 	}
 }

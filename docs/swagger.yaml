@@ -1,6 +1,5 @@
 definitions:
   segments.DeleteResponse:
-    description: Response structure for segment deletion.
     properties:
       error:
         type: string
@@ -86,6 +85,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/segments.GetResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/segments.GetResponse'
       summary: Get user segments
       tags:
       - segments
@@ -105,6 +108,14 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/segments.SaveResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/segments.SaveResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/segments.SaveResponse'
       summary: Save a segment
@@ -128,6 +139,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/segments.DeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/segments.DeleteResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/segments.DeleteResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/segments.DeleteResponse'
       summary: Delete a segment
       tags:
       - segments
@@ -148,6 +171,14 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/users.SaveResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/users.SaveResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/users.SaveResponse'
       summary: Save a user
@@ -178,6 +209,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/users.ConfigureSegmentsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/users.ConfigureSegmentsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/users.ConfigureSegmentsResponse'
       summary: Configure user segments
       tags:
       - users
@@ -197,6 +236,14 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/users.GetSegmentsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/users.GetSegmentsResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/users.GetSegmentsResponse'
       summary: Get user segments

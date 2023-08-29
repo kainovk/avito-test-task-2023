@@ -14,11 +14,6 @@ import (
 	"avito-test-task-2023/internal/storage"
 )
 
-// DeleteResponse is the response structure for segment deletion.
-// @Summary Delete {object}
-// @Description Response structure for segment deletion.
-// @Accept json
-// @Produce json
 type DeleteResponse struct {
 	response.Response
 }
@@ -36,6 +31,9 @@ type SegmentDeleter interface {
 // @Produce json
 // @Param slug path string true "Segment slug to delete"
 // @Success 200 {object} DeleteResponse
+// @Failure 400 {object} DeleteResponse
+// @Failure 404 {object} DeleteResponse
+// @Failure 500 {object} DeleteResponse
 // @Router /segments/{slug} [delete]
 func NewSegmentDeleter(log *slog.Logger, segmentDeleter SegmentDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +48,7 @@ func NewSegmentDeleter(log *slog.Logger, segmentDeleter SegmentDeleter) http.Han
 		if slug == "" {
 			log.Info("slug param is empty")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 			return
 		}
@@ -58,12 +57,14 @@ func NewSegmentDeleter(log *slog.Logger, segmentDeleter SegmentDeleter) http.Han
 		if errors.Is(err, storage.ErrSegmentNotExists) {
 			log.Info("segment does not exist", slog.String("slug", slug))
 
+			render.Status(r, http.StatusNotFound)
 			render.JSON(w, r, response.Error("segment does not exist"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to delete segment", sl.Err(err))
 
+			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("failed to delete segment"))
 			return
 		}

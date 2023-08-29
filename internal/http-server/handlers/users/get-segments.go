@@ -18,6 +18,10 @@ type GetSegmentsResponse struct {
 	Segments []string `json:"segments"`
 }
 
+type GetSegmentsResponseFailed struct {
+	response.Response
+}
+
 type UserSegmentsGetter interface {
 	GetUserSegments(userID int64) ([]*segment.Segment, error)
 }
@@ -31,6 +35,8 @@ type UserSegmentsGetter interface {
 // @Produce json
 // @Param user_id path int true "User ID"
 // @Success 200 {object} GetSegmentsResponse
+// @Failure 400 {object} GetSegmentsResponseFailed
+// @Failure 500 {object} GetSegmentsResponseFailed
 // @Router /users/{user_id}/segments [get]
 func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +51,7 @@ func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGett
 		if userIDStr == "" {
 			log.Info("user_id param is empty")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 			return
 		}
@@ -53,6 +60,7 @@ func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGett
 		if err != nil {
 			log.Error("failed to parse user_id")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 		}
 
@@ -60,6 +68,7 @@ func NewUserSegmentsGetter(log *slog.Logger, userSegmentsGetter UserSegmentsGett
 		if err != nil {
 			log.Error("failed to get user segments", sl.Err(err))
 
+			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("failed to get user segments"))
 			return
 		}

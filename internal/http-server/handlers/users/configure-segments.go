@@ -38,6 +38,8 @@ type UserSegmentConfigurer interface {
 // @Param user_id path int true "User ID"
 // @Param request body ConfigureSegmentsRequest true "Request body"
 // @Success 200 {object} ConfigureSegmentsResponse
+// @Failure 400 {object} ConfigureSegmentsResponse
+// @Failure 500 {object} ConfigureSegmentsResponse
 // @Router /users/{user_id}/configure-segments [post]
 func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmentConfigurer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +56,14 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 		if errors.Is(err, io.EOF) {
 			log.Error("request body is empty")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("empty request"))
 			return
 		}
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("failed to decode request"))
 			return
 		}
@@ -70,6 +74,7 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 		if userIDStr == "" {
 			log.Info("user_id param is empty")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 			return
 		}
@@ -78,6 +83,7 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 		if err != nil {
 			log.Error("failed to parse user_id")
 
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 		}
 
@@ -85,6 +91,7 @@ func NewUserSegmentConfigurer(log *slog.Logger, userSegmentConfigurer UserSegmen
 		if err != nil {
 			log.Error("failed to configure user segments", sl.Err(err))
 
+			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("failed to configure user segments"))
 			return
 		}

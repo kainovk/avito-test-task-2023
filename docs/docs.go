@@ -35,6 +35,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/segments.GetResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/segments.GetResponse"
+                        }
                     }
                 }
             },
@@ -64,6 +70,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/segments.SaveResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/segments.SaveResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/segments.SaveResponse"
                         }
@@ -99,6 +117,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/segments.DeleteResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/segments.DeleteResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/segments.DeleteResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/segments.DeleteResponse"
+                        }
                     }
                 }
             }
@@ -130,6 +166,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.SaveResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/users.SaveResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/users.SaveResponse"
                         }
@@ -174,6 +222,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/users.ConfigureSegmentsResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/users.ConfigureSegmentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/users.ConfigureSegmentsResponse"
+                        }
                     }
                 }
             }
@@ -206,6 +266,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/users.GetSegmentsResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/users.GetSegmentsResponse"
+                        }
                     }
                 }
             }
@@ -213,7 +285,6 @@ const docTemplate = `{
     },
     "definitions": {
         "segments.DeleteResponse": {
-            "description": "Response structure for segment deletion.",
             "type": "object",
             "properties": {
                 "error": {
