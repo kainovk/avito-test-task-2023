@@ -21,8 +21,6 @@ or simply rename [`template.env`](template.env) to `.env` with your configuratio
 `$env:CONFIG_PATH = "config/local.yml"; go run cmd/avito-slug/main.go`
 
 ### Deploy
-**!!! Requests from outside the container is not allowed !!!**
-(client service should be also a container)
 
 1. Create `.env` file in the root of the project with a similar structure:
 
