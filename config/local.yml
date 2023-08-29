@@ -6,7 +6,7 @@ http_server:
   idle_timeout: 60s
 
 storage:
-  host: "localhost" # container name
+  host: "postgres" # container name
   port: "5432"
   database: "avito_db"
   username: "postgres"
