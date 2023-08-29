@@ -7,6 +7,8 @@ services:
     restart: always
     ports:
       - "5444:5432"
+    networks:
+      - app-network
     volumes:
       - db_data:/var/lib/postgresql/data
     env_file:
@@ -19,6 +21,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    networks:
+      - app-network
     depends_on:
       - postgres
     env_file:
@@ -26,3 +30,6 @@ services:
 
 volumes:
   db_data:
+
+networks:
+  app-network:

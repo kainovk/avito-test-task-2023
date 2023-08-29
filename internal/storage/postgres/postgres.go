@@ -22,11 +22,11 @@ type Storage struct {
 func New(creds config.Storage) (*Storage, error) {
 	const op = "storage.postgres.New"
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		creds.Host,
-		creds.Port,
+	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		creds.Username,
 		creds.Password,
+		creds.Host,
+		creds.Port,
 		creds.Database,
 	)
 

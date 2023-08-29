@@ -31,7 +31,7 @@ type Storage struct {
 func MustLoad() *Config {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		log.Println("CONFIG_PATH is not set, using environment variables")
+		log.Println("CONFIG_PATH is not set, using local env")
 		configPath = "config/local.yml"
 	}
 
