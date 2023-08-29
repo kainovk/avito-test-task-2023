@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"github.com/go-playground/validator/v10"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"github.com/go-playground/validator/v10"
 
 	"avito-test-task-2023/internal/lib/api/response"
 	"avito-test-task-2023/internal/lib/logger/sl"

@@ -1,16 +1,18 @@
 package postgres
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/lib/pq"
+
 	"avito-test-task-2023/internal/config"
 	"avito-test-task-2023/internal/http-server/handlers/users"
 	"avito-test-task-2023/internal/models/segment"
 	"avito-test-task-2023/internal/models/user"
 	"avito-test-task-2023/internal/storage"
-	"database/sql"
-	"errors"
-	"fmt"
-	"github.com/lib/pq"
-	"time"
 )
 
 type Storage struct {
